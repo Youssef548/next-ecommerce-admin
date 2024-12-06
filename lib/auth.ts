@@ -1,51 +1,61 @@
-import GoogleProvider from "next-auth/providers/google";
-import { DefaultSession, NextAuthOptions } from "next-auth";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
+import { AuthOptions } from "next-auth";
+import bcrypt from "bcrypt";
 
-export const authOptions: NextAuthOptions = {
+import CredentialsProvider from "next-auth/providers/credentials";
+import GithubProivder from "next-auth/providers/github";
+import GoogleProvider from "next-auth/providers/google";
+import prisma from "@/lib/prismadb";
+
+export const authOptions: AuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
+    GithubProivder({
+      clientId: process.env.GITHUB_ID as string,
+      clientSecret: process.env.GITHUB_SECRET as string,
+    }),
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
+    CredentialsProvider({
+      name: "credentials",
+      credentials: {
+        email: { label: "email", type: "text" },
+        password: { label: "email", type: "password" },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials.password) {
+          throw new Error("Invalid Credentilas");
+        }
+
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        });
+
+        if (!user || !user?.hashedPassword) {
+          throw new Error("Invalid Credentilas");
+        }
+
+        const isCorrectPassword = await bcrypt.compare(
+          credentials.password,
+          user.hashedPassword
+        );
+
+        if (!isCorrectPassword) {
+          throw new Error("Invalid credentials");
+        }
+
+        return user;
+      },
     }),
   ],
-  secret: process.env.NEXTAUTH_SECRET,
+
+  debug: process.env.NODE_ENV === "development",
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
-  callbacks: {
-    async signIn({ user, profile }) {
-      if (user) {
-        // Ensure user has an id
-        user.id = user.id || profile?.sub || user.email || "";
-      }
-      return true;
-    },
-    async session({ session, token }) {
-      if (session?.user) {
-        session.user.id = token.id as string;
-        session.user.accessToken = token.accessToken as string;
-      }
-      return session;
-    },
-
-    async jwt({ token, account, user }) {
-      if (account) {
-        token.accessToken = account.access_token;
-      }
-      if (user) {
-        token.id = user.id; // This ensures `id` is propagated
-      }
-      return token;
-    },
-  },
+  secret: process.env.NEXTAUTH_SECRET,
 };
-
-declare module "next-auth" {
-  interface Session {
-    user: {
-      id: string;
-      accessToken: string;
-    } & DefaultSession["user"];
-  }
-}
