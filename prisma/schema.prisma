@@ -46,6 +46,17 @@ model User {
   updatedAt      DateTime  @updatedAt
 
   accounts Account[]
+  stores   Store[]
 
   @@map("users")
+}
+
+model Store {
+  id     Int     @id @default(autoincrement())
+  name   String?
+  userId Int
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("stores")
 }
