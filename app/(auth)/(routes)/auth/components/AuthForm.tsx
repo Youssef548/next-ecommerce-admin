@@ -80,6 +80,7 @@ export default function AuthForm() {
 
             if (callback?.ok && !callback?.error) {
               toast.success("Login successful");
+              router.push("/");
             }
           })
           .finally(() => setIsLoading(false));
