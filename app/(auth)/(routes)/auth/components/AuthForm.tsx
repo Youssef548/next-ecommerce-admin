@@ -16,6 +16,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "../../../../../components/ui/button";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
+import { signIn } from "next-auth/react";
+
+import axios from "axios";
+import toast from "react-hot-toast";
 
 type AuthFormVariant = "Login" | "Register";
 const registerSchema = z.object({
@@ -46,14 +50,30 @@ export default function AuthForm() {
 
   const onSubmit: SubmitHandler<FormData> = async (data) => {
     setIsLoading(true);
-    console.log("Submitted values:", data); // Debugging
+
     try {
       if (variant === "Register") {
-        // Replace with Axios/Fetch API call for registration
-        console.log("Registering user:", data);
-      } else {
-        // Replace with NextAuth sign-in call
-        console.log("Logging in user:", data);
+        await axios
+          .post("/api/register", data)
+          .catch(() => toast.error("Registration failed"))
+          .finally(() => setIsLoading(false));
+      }
+
+      if (variant === "Login") {
+        signIn("credentials", {
+          ...data,
+          redirect: false,
+        })
+          .then((callback) => {
+            if (callback?.error) {
+              toast.error("Login failed");
+            }
+
+            if (callback?.ok && !callback?.error) {
+              toast.success("Login successful");
+            }
+          })
+          .finally(() => setIsLoading(false));
       }
     } catch (error) {
       console.error("Submission error:", error);
@@ -64,6 +84,23 @@ export default function AuthForm() {
 
   const socialAuth = async (provider: "google" | "github") => {
     // NextAuth SignIn with provider
+    setIsLoading(true);
+
+    signIn(provider, {
+      redirect: false,
+    })
+      .then((callback) => {
+        if (callback?.error) {
+          toast.error("Login failed");
+        }
+
+        if (callback?.ok && !callback?.error) {
+          toast.success("Login successful");
+        }
+
+        setIsLoading(false);
+      })
+      .finally(() => setIsLoading(false));
   };
 
   return (
