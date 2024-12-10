@@ -3,14 +3,14 @@ import { AuthOptions } from "next-auth";
 import bcrypt from "bcrypt";
 
 import CredentialsProvider from "next-auth/providers/credentials";
-import GithubProivder from "next-auth/providers/github";
+import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import prisma from "@/lib/prismadb";
 
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   providers: [
-    GithubProivder({
+    GithubProvider({
       clientId: process.env.GITHUB_ID as string,
       clientSecret: process.env.GITHUB_SECRET as string,
     }),
@@ -22,7 +22,7 @@ export const authOptions: AuthOptions = {
       name: "credentials",
       credentials: {
         email: { label: "email", type: "text" },
-        password: { label: "email", type: "password" },
+        password: { label: "password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
