@@ -11,6 +11,9 @@ export default withAuth(
     callbacks: {
       authorized: ({ token }) => !!token,
     },
+    pages: {
+      signIn: "/auth", // Redirect here when not signed in
+    },
   }
 );
 
