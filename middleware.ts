@@ -9,7 +9,15 @@ export default withAuth(
   },
   {
     callbacks: {
-      authorized: ({ token }) => !!token,
+      authorized({ req, token }) {
+        if (
+          req.nextUrl.pathname.startsWith("/api/register") ||
+          req.nextUrl.pathname.startsWith("/api/login")
+        )
+          return true;
+        if (!token) return false;
+        return true;
+      },
     },
     pages: {
       signIn: "/auth", // Redirect here when not signed in
