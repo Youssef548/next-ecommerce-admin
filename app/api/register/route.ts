@@ -1,8 +1,8 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prismadb";
 import { createUser } from "@/lib/repository/user";
-
+import { RegisterForm, registerSchema } from "@/lib/schemas/userSchema";
+import * as z from "zod";
 // Centralized Error Class for Better Error Handling
 class AppError extends Error {
   statusCode: number;
@@ -11,24 +11,17 @@ class AppError extends Error {
     this.statusCode = statusCode;
   }
 }
+async function validateUserInput(body: RegisterForm) {
+  try {
+    return registerSchema.parse(body);
+  } catch (error: any) {
+    if (error instanceof z.ZodError) {
+      const errorMessage = error.errors[0]?.message || "Invalid input";
+      throw new AppError(errorMessage, 422);
+    }
 
-// Input Validation with Clearer Separation of Concerns
-async function validateUserInput(body: any) {
-  const { name, email, password } = body;
-
-  if (!name || !email || !password) {
-    throw new AppError("Missing required fields", 422);
+    throw new AppError("Invalid input", 422);
   }
-
-  if (!/\S+@\S+\.\S+/.test(email)) {
-    throw new AppError("Invalid email format", 422);
-  }
-
-  if (password.length < 8) {
-    throw new AppError("Password must be at least 8 characters long", 422);
-  }
-
-  return { name, email, password };
 }
 
 // Password Hashing Utility
