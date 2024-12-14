@@ -64,11 +64,27 @@ export default function AuthForm() {
       if (variant === "Register") {
         axios
           .post("/api/register", data)
-          .then(() => signIn("credentials", data))
-          .catch(() => toast.error("Registration failed"))
+          .then(() => {
+            signIn("credentials", { ...data, redirect: false }).then(
+              (callback) => {
+                if (callback?.error) {
+                  toast.error("Login failed");
+                }
+
+                if (callback?.ok && !callback?.error) {
+                  toast.success("Login successful");
+                  router.push("/");
+                }
+              }
+            );
+          })
+          .catch((err) => {
+            const errorMessage =
+              err.response?.data?.message || "Registration failed";
+            toast.error(errorMessage);
+          })
           .finally(() => setIsLoading(false));
       }
-
       if (variant === "Login") {
         signIn("credentials", {
           ...data,

@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prismadb";
+import { createUser } from "@/lib/repository/user";
 
 // Centralized Error Class for Better Error Handling
 class AppError extends Error {
@@ -38,21 +39,6 @@ async function hashPassword(password: string) {
     throw new AppError("Failed to hash password", 500);
   }
 }
-
-// Database Interaction with Error Logging
-async function createUser(data: {
-  name: string;
-  email: string;
-  hashedPassword: string;
-}) {
-  try {
-    return await prisma.user.create({ data });
-  } catch (error: any) {
-    console.error("Database Error:", error);
-    throw new AppError("Failed to create user", 500);
-  }
-}
-
 // API Route Handler with Improved Error Responses
 export async function POST(request: Request) {
   try {
