@@ -21,18 +21,10 @@ import { signIn, useSession } from "next-auth/react";
 import axios from "axios";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import { loginSchema, registerSchema } from "@/lib/schemas/userSchema";
 
 type AuthFormVariant = "Login" | "Register";
-const registerSchema = z.object({
-  name: z.string().min(3, "Name is required").max(50),
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-});
 
-const loginSchema = z.object({
-  email: z.string().email("Invalid email format"),
-  password: z.string().min(6, "Password must be at least 6 characters long"),
-});
 export default function AuthForm() {
   const session = useSession();
   const router = useRouter();
