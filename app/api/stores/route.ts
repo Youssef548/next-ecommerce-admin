@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { NextResponse } from "next/server";
 
 import prismadb from "@/lib/prismadb";
+import { error } from "console";
 
 export async function POST(request: Request) {
   try {
@@ -14,6 +15,14 @@ export async function POST(request: Request) {
     }
 
     const userId = parseInt(session.user.id);
+
+    const userExists = await prismadb.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userExists) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
 
     const body = await request.json();
 
