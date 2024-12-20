@@ -34,17 +34,24 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials.password) {
-          throw new Error("Invalid Credentilas");
+          throw new Error("Invalid Credentials");
         }
 
         const user = await prisma.user.findUnique({
           where: {
             email: credentials.email,
           },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            image: true,
+            hashedPassword: true,
+          },
         });
 
-        if (!user || !user?.hashedPassword) {
-          throw new Error("Invalid Credentilas");
+        if (!user || !user.hashedPassword) {
+          throw new Error("Invalid Credentials");
         }
 
         const isCorrectPassword = await bcrypt.compare(
@@ -53,10 +60,15 @@ export const authOptions: AuthOptions = {
         );
 
         if (!isCorrectPassword) {
-          throw new Error("Invalid credentials");
+          throw new Error("Invalid Credentials");
         }
 
-        return user;
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        };
       },
     }),
   ],
@@ -73,6 +85,8 @@ declare module "next-auth" {
     user: {
       id: string;
       email: string;
+      name: string;
+      image: string;
       // other user properties
     };
   }
