@@ -24,7 +24,6 @@ export async function PATCH(
     }
 
     const storeId = parseInt(params.storeId);
-
     const userId = parseInt(session.user.id);
 
     const userExists = await prismadb.user.findUnique({
@@ -45,18 +44,19 @@ export async function PATCH(
 
     const storeExists = await prismadb.store.findFirst({
       where: {
-        name,
         userId,
-        storeId,
+        id: storeId,
       },
     });
 
     if (!storeExists) {
       return NextResponse.json({ error: "Store not found" }, { status: 400 });
     }
-
-    if (storeExists.storeId !== storeId) {
-      return NextResponse.json({ error: "Store not found" }, { status: 400 });
+    if (storeExists.id !== storeId) {
+      return NextResponse.json(
+        { error: "You are not the owner of this store" },
+        { status: 400 }
+      );
     }
 
     const store = await prismadb.store.update({
@@ -79,6 +79,75 @@ export async function PATCH(
     return NextResponse.json(store);
   } catch (error) {
     console.log("[STORE_PATCH]", error);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  { params }: { params: { storeId: string } }
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.email || !session?.user?.id) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    if (!params.storeId) {
+      return NextResponse.json(
+        { error: "Store id is required" },
+        { status: 400 }
+      );
+    }
+
+    const storeId = parseInt(params.storeId);
+
+    const userId = parseInt(session.user.id);
+
+    const userExists = await prismadb.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!userExists) {
+      return NextResponse.json({ error: "User not found" }, { status: 401 });
+    }
+
+    const storeExists = await prismadb.store.findFirst({
+      where: {
+        id: storeId,
+        userId,
+      },
+    });
+
+    if (!storeExists) {
+      return NextResponse.json({ error: "Store not found" }, { status: 400 });
+    }
+
+    if (storeExists.id !== storeId) {
+      return NextResponse.json(
+        { error: "You are not the owner of this store" },
+        { status: 400 }
+      );
+    }
+
+    const store = await prismadb.store.delete({
+      where: {
+        id: storeId,
+        userId,
+      },
+    });
+
+    if (!store) {
+      return NextResponse.json(
+        { error: "Store not deleted. Something went wrong, please try again." },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(store);
+  } catch (error) {
+    console.log("[STORE_DELETE]", error);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
