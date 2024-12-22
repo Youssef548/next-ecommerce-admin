@@ -1,6 +1,8 @@
 "use client";
 
+import { useOrigin } from "@/app/hooks/useOrigin";
 import { AlertModal } from "@/components/modals/alertModal";
+import { ApiAlert } from "@/components/ui/api-alert";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -32,6 +34,8 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
   const params = useParams();
   const router = useRouter();
 
+  const origin = useOrigin();
+
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -62,8 +66,6 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
     } finally {
       setIsLoading(false);
     }
-
-    console.log(data);
   };
 
   const onDelete = async () => {
@@ -137,6 +139,12 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
           </Button>
         </form>
       </Form>
+      <Separator />
+      <ApiAlert
+        title="NEXT_PUBLIC_API_URL"
+        description={`${origin}/api/${params.storeId}`}
+        variant="public"
+      />
     </>
   );
 };
