@@ -52,11 +52,26 @@ model User {
 }
 
 model Store {
-  id     Int     @id @default(autoincrement())
-  name   String?
-  userId Int
-  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        Int         @id @default(autoincrement())
+  name      String?
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  Billboard Billboard[]
 
   @@index([userId])
   @@map("stores")
+}
+
+model Billboard {
+  id       Int    @id @default(autoincrement())
+  storeId  Int
+  store    Store  @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  label    String
+  imageUrl String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+  @@map("billboards")
 }
