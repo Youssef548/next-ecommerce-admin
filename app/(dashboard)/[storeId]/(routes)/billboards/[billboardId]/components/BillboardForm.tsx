@@ -99,7 +99,7 @@ export const BillboardForm = ({ initialData }: BillboardFormProps) => {
       setIsLoading(true);
 
       await api.delete(
-        `/stores/${params.storeId}/billboards/${params.billboardId}`
+        `/${params.storeId}/billboards/${params.billboardId}`
       );
 
       router.refresh();
