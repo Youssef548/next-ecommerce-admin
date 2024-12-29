@@ -84,8 +84,8 @@ export const BillboardForm = ({ initialData }: BillboardFormProps) => {
         await api.post(`${params.storeId}/billboards`, data);
       }
 
-      router.refresh();
       router.push(`/${params.storeId}/billboards`);
+      router.refresh();
       toast.success(toastMessage);
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Something went wrong");
@@ -102,8 +102,8 @@ export const BillboardForm = ({ initialData }: BillboardFormProps) => {
         `/${params.storeId}/billboards/${params.billboardId}`
       );
 
-      router.refresh();
       router.push(`/${params.storeId}/billboards`);
+      router.refresh();
       toast.success("Billboard deleted successfully");
     } catch (error: any) {
       toast.error(error?.response?.data?.error || "Something went wrong");
