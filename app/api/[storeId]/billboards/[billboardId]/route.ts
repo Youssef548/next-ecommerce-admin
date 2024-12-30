@@ -8,27 +8,10 @@ export async function GET(
   { params }: { params: { storeId: string; billboardId: string } }
 ) {
   try {
-    // Check if user is authenticated
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email || !session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const userId = session.user.id;
-
-    const userExists = await prismadb.user.findUnique({
-      where: {
-        id: userId,
-      },
-    });
-    if (!userExists) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
     // Validate store and billboard
     const store = await prismadb.store.findFirst({
       where: {
         id: parseInt(params.storeId),
-        userId,
       },
     });
 
