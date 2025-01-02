@@ -24,6 +24,11 @@ export function MainNav({ className, ...props }: MainNavProps): JSX.Element {
       active: pathname === `/store/${params.storeId}/billboards`,
     },
     {
+      href: `/${params.storeId}/categories`,
+      label: "Categories",
+      active: pathname === `/store/${params.storeId}/categories`,
+    },
+    {
       href: `/${params.storeId}/settings`,
       label: "Settings",
       active: pathname === `/store/${params.storeId}/settings`,
