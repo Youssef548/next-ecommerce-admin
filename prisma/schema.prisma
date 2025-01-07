@@ -60,6 +60,7 @@ model Store {
   Category  Category[]  @relation("StoreToCategory")
   Size      Size[]      @relation("StoreToSize")
   Color     Color[]     @relation("StoreToColor")
+  Product   Product[]   @relation("StoreToProduct")
 
   @@index([userId])
   @@map("stores")
@@ -86,6 +87,7 @@ model Category {
   store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
   billboardId Int
   billboard   Billboard @relation(fields: [billboardId], references: [id])
+  Product     Product[] @relation("ProductToCategory")
 
   label String
 
@@ -98,12 +100,12 @@ model Category {
 }
 
 model Size {
-  id      Int   @id @default(autoincrement())
-  storeId Int
-  store   Store @relation("StoreToSize", fields: [storeId], references: [id])
-
-  name  String
-  value String
+  id       Int       @id @default(autoincrement())
+  storeId  Int
+  store    Store     @relation("StoreToSize", fields: [storeId], references: [id])
+  products Product[]
+  name     String
+  value    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -113,16 +115,55 @@ model Size {
 }
 
 model Color {
-  id      Int   @id @default(autoincrement())
-  storeId Int
-  store   Store @relation("StoreToColor", fields: [storeId], references: [id])
-
-  name  String
-  value String
+  id       Int       @id @default(autoincrement())
+  storeId  Int
+  store    Store     @relation("StoreToColor", fields: [storeId], references: [id])
+  products Product[]
+  name     String
+  value    String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([storeId])
   @@map("colors")
+}
+
+model Product {
+  id         Int      @id @default(autoincrement())
+  storeId    Int
+  store      Store    @relation("StoreToProduct", fields: [storeId], references: [id])
+  categoryId Int
+  category   Category @relation("ProductToCategory", fields: [categoryId], references: [id])
+  name       String
+  price      Decimal
+  isFeatured Boolean @default(false)
+  isArchived Boolean @default(false)
+  sizeId Int
+  size   Size @relation(fields: [sizeId], references: [id])
+  colorId Int
+  color   Color @relation(fields: [colorId], references: [id])
+  images Image[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+  @@index([categoryId])
+  @@index([colorId])
+  @@index([sizeId])
+  @@map("products")
+}
+
+model Image {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([productId])
+  @@map("images")
 }
