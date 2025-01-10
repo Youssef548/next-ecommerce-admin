@@ -61,6 +61,7 @@ model Store {
   Size      Size[]      @relation("StoreToSize")
   Color     Color[]     @relation("StoreToColor")
   Product   Product[]   @relation("StoreToProduct")
+  Order     Order[]     @relation("StoreToOrder")
 
   @@index([userId])
   @@map("stores")
@@ -130,21 +131,22 @@ model Color {
 }
 
 model Product {
-  id         Int      @id @default(autoincrement())
+  id         Int         @id @default(autoincrement())
   storeId    Int
-  store      Store    @relation("StoreToProduct", fields: [storeId], references: [id])
+  store      Store       @relation("StoreToProduct", fields: [storeId], references: [id])
   categoryId Int
-  category   Category @relation("ProductToCategory", fields: [categoryId], references: [id])
+  category   Category    @relation("ProductToCategory", fields: [categoryId], references: [id])
   name       String
   price      Decimal
-  isFeatured Boolean @default(false)
-  isArchived Boolean @default(false)
-  sizeId Int
-  size   Size @relation(fields: [sizeId], references: [id])
-  colorId Int
-  color   Color @relation(fields: [colorId], references: [id])
-  images Image[]
-  
+  isFeatured Boolean     @default(false)
+  isArchived Boolean     @default(false)
+  sizeId     Int
+  size       Size        @relation(fields: [sizeId], references: [id])
+  colorId    Int
+  color      Color       @relation(fields: [colorId], references: [id])
+  images     Image[]
+  orderItems OrderItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -166,4 +168,32 @@ model Image {
 
   @@index([productId])
   @@map("images")
+}
+
+model Order {
+  id         Int         @id @default(autoincrement())
+  storeId    Int
+  store      Store       @relation("StoreToOrder", fields: [storeId], references: [id])
+  orderItems OrderItem[]
+  isPaid     Boolean     @default(false)
+  phone      String      @default("")
+  address    String      @default("")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([storeId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  orderId   Int
+  order     Order   @relation(fields: [orderId], references: [id])
+  productId Int
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
 }
