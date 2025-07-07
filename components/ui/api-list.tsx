@@ -9,7 +9,7 @@ interface ApiListProps {
     entityIdName: string;
 }
 
-export const ApiList = ( { entityName, entityIdName }: ApiListProps) => {
+ const ApiList = ( { entityName, entityIdName }: ApiListProps) => {
     const params = useParams();
     const origin = useOrigin();
 
@@ -45,3 +45,5 @@ export const ApiList = ( { entityName, entityIdName }: ApiListProps) => {
         </>
     )
 }
+export { ApiList };
+export default ApiList;

@@ -8,13 +8,18 @@ import { DataTable } from "@/components/ui/data-table";
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { BillboardColumn, columns } from "./columns";
-import { ApiList } from "@/components/ui/api-list";
+import dynamic from "next/dynamic";
+
+const ApiList = dynamic(() => import("@/components/ui/api-list"), {
+  ssr: false,
+  loading: () => <p>Loading ApiList...</p>,
+});
 
 interface BillboardsClientProps {
   billboards: BillboardColumn[];
 }
 
-export const BillboardClient = ({ billboards }: BillboardsClientProps) => {
+const BillboardClient = ({ billboards }: BillboardsClientProps) => {
   const router = useRouter();
   const params = useParams();
 
@@ -37,8 +42,11 @@ export const BillboardClient = ({ billboards }: BillboardsClientProps) => {
       <Heading title="API" description="API calls for Billboards" />
       <Separator />
       <ApiList entityName="billboards" entityIdName="billboardId" />
-      
+
 
     </>
   );
 };
+
+export { BillboardClient };
+export default BillboardClient;
