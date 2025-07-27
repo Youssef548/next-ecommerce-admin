@@ -25,6 +25,9 @@ export async function GET(
         id: parseInt(params.categoryId),
         storeId: parseInt(params.storeId),
       },
+      include: {
+        billboard: true,
+      },
     });
 
     if (!category) {
