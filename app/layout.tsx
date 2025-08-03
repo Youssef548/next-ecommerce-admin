@@ -3,6 +3,7 @@ import AuthContext from "./context/AuthContext";
 import ToasterContext from "./context/ToasterContext";
 import "./globals.css";
 import { Inter } from "next/font/google";
+import { ThemeProvider } from "@/providers/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,13 +18,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`${inter.className}`}>
-        <AuthContext>
-          <ModalProvider />
-          <ToasterContext />
-          {children}
-        </AuthContext>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <AuthContext>
+            <ToasterContext />
+            <ModalProvider />
+            {children}
+          </AuthContext>
+        </ThemeProvider>
       </body>
     </html>
   );
