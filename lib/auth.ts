@@ -10,9 +10,15 @@ import prisma from "@/lib/prismadb";
 export const authOptions: AuthOptions = {
   adapter: PrismaAdapter(prisma),
   callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
     async session({ session, token }) {
       if (token.sub && session.user) {
-        session.user.id = token.sub;
+        session.user.id = token.sub as string;
       }
       return session;
     },
@@ -76,6 +82,8 @@ export const authOptions: AuthOptions = {
   debug: process.env.NODE_ENV === "development",
   session: {
     strategy: "jwt",
+    maxAge: 0.1 * 24 * 60 * 60, // an hour
+    updateAge: 0.05 * 24 * 60 * 60, // 30 minutes
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
