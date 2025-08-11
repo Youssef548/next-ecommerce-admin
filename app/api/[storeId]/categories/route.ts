@@ -31,10 +31,6 @@ export async function POST(
       return NextResponse.json({ error: "Label is required" }, { status: 400 });
     }
 
-    if (!billboardId) {
-      return NextResponse.json({ error: "Billboard ID is required" }, { status: 400 });
-    }
-
     if (!params.storeId) {
       return NextResponse.json(
         { error: "Store ID is required" },
@@ -57,7 +53,7 @@ export async function POST(
     const category = await prismadb.category.create({
       data: {
         label,
-        billboardId: parseInt(billboardId),
+        billboardId: billboardId ? parseInt(billboardId) : null,
         storeId: parseInt(params.storeId),
       },
     });

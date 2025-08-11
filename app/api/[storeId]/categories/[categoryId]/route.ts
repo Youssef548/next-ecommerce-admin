@@ -108,7 +108,7 @@ export async function PATCH(
       },
       data: {
         label,
-        billboardId: parseInt(billboardId),
+        billboardId: billboardId ? parseInt(billboardId) : null,
       },
     });
 

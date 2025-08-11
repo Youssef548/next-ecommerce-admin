@@ -33,7 +33,7 @@ import * as z from "zod";
 // Create a schema for category form
 const categorySchema = z.object({
   label: z.string().min(1, "Label is required"),
-  billboardId: z.string().min(1, "Billboard ID is required"),
+  billboardId: z.string().optional(),
 });
 
 type CategoryFormValues = z.infer<typeof categorySchema>;
@@ -61,7 +61,7 @@ export const CategoryForm = ({ initialData , billboards}: CategoryFormProps) => 
     defaultValues: initialData
       ? {
           label: initialData.label,
-          billboardId: String(initialData.billboardId),
+          billboardId: initialData.billboardId ? String(initialData.billboardId) : "",
         }
       : {
           label: "",
@@ -72,15 +72,20 @@ export const CategoryForm = ({ initialData , billboards}: CategoryFormProps) => 
     try {
       setIsLoading(true);
 
-      if (initialData) {
+      // Prepare data with optional billboardId
+      const submitData = {
+        label: data.label,
+        billboardId: data.billboardId && data.billboardId !== "" ? data.billboardId : null,
+      };
 
+      if (initialData) {
         await api.patch(
           `${params.storeId}/categories/${params.categoryId}`,
-          data
+          submitData
         );
       } else {
-        // Create new billboard
-        await api.post(`${params.storeId}/categories`, data);
+        // Create new category
+        await api.post(`${params.storeId}/categories`, submitData);
       }
 
       router.push(`/${params.storeId}/categories`);
@@ -160,18 +165,18 @@ export const CategoryForm = ({ initialData , billboards}: CategoryFormProps) => 
               name="billboardId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Billboard</FormLabel>
+                  <FormLabel>Billboard (Optional)</FormLabel>
                   <Select
                     disabled={isLoading}
                     onValueChange={field.onChange}
-                    value={String(field.value)}
-                    defaultValue={String(field.value)}
+                    value={String(field.value || "")}
+                    defaultValue={String(field.value || "")}
                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue
-                          defaultValue={String(field.value)}
-                          placeholder="Select a billboard"
+                          defaultValue={String(field.value || "")}
+                          placeholder="Select a billboard (optional)"
                         />
                       </SelectTrigger>
                     </FormControl>

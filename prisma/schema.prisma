@@ -86,8 +86,8 @@ model Category {
   id          Int       @id @default(autoincrement())
   storeId     Int
   store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
-  billboardId Int
-  billboard   Billboard @relation(fields: [billboardId], references: [id])
+  billboardId Int?
+  billboard   Billboard? @relation(fields: [billboardId], references: [id])
   Product     Product[] @relation("ProductToCategory")
 
   label String
