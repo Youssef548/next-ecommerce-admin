@@ -1,5 +1,22 @@
 import prismadb from "@/lib/prismadb";
-import { ColorForm } from "./components/ColorForm";
+// import { ColorForm } from "./components/ColorForm";
+import dynamic from "next/dynamic";
+import Skeleton from "@/components/ui/skeleton";
+
+const ColorForm = dynamic(
+  () => import("./components/ColorForm").then((m) => m.ColorForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-40" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 const ColorPage = async ({
   params,
@@ -13,7 +30,6 @@ const ColorPage = async ({
         id: parseInt(params.colorId),
       },
     });
-    console.log("HI");
   }
 
   return (

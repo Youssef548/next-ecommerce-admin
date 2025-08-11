@@ -3,17 +3,35 @@
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/data-table";
-
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { BillboardColumn, columns } from "./columns";
 import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ApiList = dynamic(() => import("@/components/ui/api-list"), {
   ssr: false,
   loading: () => <p>Loading ApiList...</p>,
 });
+
+const DataTable = dynamic(
+  () => import("@/components/ui/data-table").then((m) => m.DataTable as any),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="rounded-md border">
+        <div className="p-4">
+          <Skeleton className="h-10 w-64" />
+        </div>
+        <div className="space-y-2 p-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      </div>
+    ),
+  }
+);
 
 interface BillboardsClientProps {
   billboards: BillboardColumn[];
@@ -42,8 +60,6 @@ const BillboardClient = ({ billboards }: BillboardsClientProps) => {
       <Heading title="API" description="API calls for Billboards" />
       <Separator />
       <ApiList entityName="billboards" entityIdName="billboardId" />
-
-
     </>
   );
 };

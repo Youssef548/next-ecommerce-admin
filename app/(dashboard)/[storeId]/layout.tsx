@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 
 import { authOptions } from "@/lib/auth";
 import prismadb from "@/lib/prismadb";
-import Navbar from "@/components/navbar";
+import dynamic from "next/dynamic";
+
+const Navbar = dynamic(() => import("@/components/navbar"), { ssr: false });
 
 export default async function DashboardLayout({
   children,

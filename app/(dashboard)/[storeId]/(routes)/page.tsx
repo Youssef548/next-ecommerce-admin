@@ -1,15 +1,26 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { redirect } from "next/navigation";
-import prismadb from "@/lib/prismadb";
 import { CreditCard, DollarSign, Package } from "lucide-react";
 import { priceFormatter } from "@/lib/utils";
 import { getTotalRevenue } from "@/actions/get-total-revenue";
 import { getSalesCount } from "@/actions/get-sales-count";
 import { getStockCount } from "@/actions/get-stock-count";
-import { Overview } from "@/components/overview";
+// import { Overview } from "@/components/overview";
 import { getGraphRevenue } from "@/actions/get-graph-revenue";
+import dynamic from "next/dynamic";
+
+const Overview = dynamic(
+  () => import("@/components/overview").then((m) => m.Overview),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="pl-2">
+        <div className="h-[350px] w-full rounded-md border animate-pulse bg-muted" />
+      </div>
+    ),
+  }
+);
 
 interface DashboardPageProps {
   params: { storeId: string };

@@ -1,5 +1,22 @@
 import prismadb from "@/lib/prismadb";
-import { ProductForm } from "./components/ProductForm";
+// import { ProductForm } from "./components/ProductForm";
+import dynamic from "next/dynamic";
+import Skeleton from "@/components/ui/skeleton";
+
+const ProductForm = dynamic(
+  () => import("./components/ProductForm").then((m) => m.ProductForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-40" />
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 const ProductPage = async ({
   params,

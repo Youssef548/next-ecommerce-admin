@@ -1,10 +1,27 @@
 import prismadb from "@/lib/prismadb";
-import { CategoryForm } from "./components/CategoryForm";
+// import { CategoryForm } from "./components/CategoryForm";
+import dynamic from "next/dynamic";
+import Skeleton from "@/components/ui/skeleton";
+
+const CategoryForm = dynamic(
+  () => import("./components/CategoryForm").then((m) => m.CategoryForm),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="space-y-3">
+        <Skeleton className="h-6 w-40" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    ),
+  }
+);
 
 const CategoryPage = async ({
   params,
 }: {
-  params: { categoryId: string, storeId: string };
+  params: { categoryId: string; storeId: string };
 }) => {
   let category = null;
   if (params.categoryId !== "new") {
@@ -14,8 +31,6 @@ const CategoryPage = async ({
       },
     });
   }
-
-
 
   const billboards = await prismadb.billboard.findMany({
     where: {

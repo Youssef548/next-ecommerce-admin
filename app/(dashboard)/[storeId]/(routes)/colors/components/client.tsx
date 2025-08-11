@@ -3,12 +3,43 @@
 import { Button } from "@/components/ui/button";
 import { Heading } from "@/components/ui/heading";
 import { Separator } from "@/components/ui/separator";
-import { DataTable } from "@/components/ui/data-table";
-
 import { Plus } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { ColorColumn, columns } from "./columns";
-import { ApiList } from "@/components/ui/api-list";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ColumnDef } from "@tanstack/react-table";
+
+const DataTable = dynamic<{
+  columns: ColumnDef<ColorColumn>[];
+  data: ColorColumn[];
+  searchKey: string;
+}>(() => import("@/components/ui/data-table").then((m) => m.DataTable), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-md border">
+      <div className="p-4">
+        <Skeleton className="h-10 w-64" />
+      </div>
+      <div className="space-y-2 p-4">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <Skeleton key={i} className="h-10 w-full" />
+        ))}
+      </div>
+    </div>
+  ),
+});
+
+const ApiList = dynamic(() => import("@/components/ui/api-list"), {
+  ssr: false,
+  loading: () => (
+    <div className="space-y-2">
+      <Skeleton className="h-6 w-32" />
+      <Skeleton className="h-6 w-48" />
+      <Skeleton className="h-6 w-44" />
+    </div>
+  ),
+});
 
 interface ColorsClientProps {
   colors: ColorColumn[];
