@@ -25,7 +25,12 @@ import { loginSchema, registerSchema } from "@/lib/schemas/userSchema";
 
 type AuthFormVariant = "Login" | "Register";
 
-export default function AuthForm() {
+type AuthFormProps = {
+  googleEnabled: boolean;
+  githubEnabled: boolean;
+};
+
+export default function AuthForm({ googleEnabled, githubEnabled }: AuthFormProps) {
   const session = useSession();
   const router = useRouter();
   const [variant, setVariant] = useState<AuthFormVariant>("Login");
@@ -106,7 +111,7 @@ export default function AuthForm() {
     setIsLoading(true);
 
     signIn(provider, {
-      redirect: false,
+      callbackUrl: "/",
     })
       .then((callback) => {
         if (callback?.error) {
@@ -115,9 +120,11 @@ export default function AuthForm() {
 
         if (callback?.ok && !callback?.error) {
           toast.success("Login successful");
+          router.push("/");
         }
-
-        setIsLoading(false);
+      })
+      .catch(() => {
+        toast.error(`${provider} login is currently unavailable`);
       })
       .finally(() => setIsLoading(false));
   };
@@ -217,15 +224,19 @@ export default function AuthForm() {
                 </div>
 
                 <div className="w-full mt-6 flex gap-2">
-                  <AuthSocialButton
-                    icon={BsGithub}
-                    onClick={() => socialAuth("github")}
-                  />
+                  {githubEnabled && (
+                    <AuthSocialButton
+                      icon={BsGithub}
+                      onClick={() => socialAuth("github")}
+                    />
+                  )}
 
-                  <AuthSocialButton
-                    icon={BsGoogle}
-                    onClick={() => socialAuth("google")}
-                  />
+                  {googleEnabled && (
+                    <AuthSocialButton
+                      icon={BsGoogle}
+                      onClick={() => socialAuth("google")}
+                    />
+                  )}
                 </div>
 
                 <div

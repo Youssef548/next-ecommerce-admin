@@ -5,6 +5,11 @@ const AuthForm = dynamic(
   { ssr: false }
 );
 
+import { isGoogleEnabled, isGithubEnabled } from "@/lib/auth-providers";
+
 export default function AuthPage() {
-  return <AuthForm />;
+  return <AuthForm 
+    googleEnabled={isGoogleEnabled}
+    githubEnabled={isGithubEnabled}
+  />;
 }
