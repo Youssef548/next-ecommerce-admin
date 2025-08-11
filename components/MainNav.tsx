@@ -2,7 +2,8 @@
 
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
   className?: string;
@@ -11,6 +12,7 @@ interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
 export function MainNav({ className, ...props }: MainNavProps): JSX.Element {
   const pathname = usePathname();
   const params = useParams();
+  const router = useRouter();
 
   const routes = [
     {
@@ -54,25 +56,33 @@ export function MainNav({ className, ...props }: MainNavProps): JSX.Element {
       active: pathname === `/${params.storeId}/settings`,
     },
   ];
+  useEffect(() => {
+    // Prefetch all pages in the background
+    routes.forEach((route) => {
+      router.prefetch(route.href);
+    });
+  }, [params.storeId]);
+
   return (
     <nav
       className={cn("flex items-center space-x-4 lg:space-x-6", className)}
       {...props}
     >
-      {routes.map((route) => (
-        <Link
-          key={route.href}
-          href={route.href}
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            route.active
-              ? "text-black dark:text-white"
-              : "text-muted-foreground"
-          )}
-        >
-          {route.label}
-        </Link>
-      ))}
+      {routes.map((route) => {
+        const active = pathname === route.href;
+        return (
+          <Link
+            key={route.href}
+            href={route.href}
+            className={cn(
+              "text-sm font-medium transition-colors hover:text-primary",
+              active ? "text-black dark:text-white" : "text-muted-foreground"
+            )}
+          >
+            {route.label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }
