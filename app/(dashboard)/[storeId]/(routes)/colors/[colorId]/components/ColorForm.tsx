@@ -20,7 +20,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Color } from "@prisma/client";
 import { Trash as TrashIcon } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { HexColorPicker } from "react-colorful";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
@@ -50,6 +51,22 @@ export const ColorForm = ({ initialData }: ColorFormProps) => {
 
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const colorPickerRef = useRef<HTMLDivElement>(null);
+  
+  // Handle click outside to close color picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (colorPickerRef.current && !colorPickerRef.current.contains(event.target as Node)) {
+        setShowColorPicker(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const title = initialData ? "Edit Color" : "Create Color";
   const description = initialData ? "Edit a color" : "Add a new color";
@@ -161,16 +178,31 @@ export const ColorForm = ({ initialData }: ColorFormProps) => {
                 <FormItem>
                   <FormLabel>Value</FormLabel>
                   <FormControl>
-                    <div className="flex items-center gap-x-4">
-                      <Input
-                        disabled={isLoading}
-                        placeholder="Color value"
-                        {...field}
-                      />
-                      <div
-                        className="p-4 rounded-full border"
-                        style={{ backgroundColor: field.value }}
-                      />
+                    <div className="flex flex-col gap-y-4" ref={colorPickerRef}>
+                      <div className="flex items-center gap-x-4">
+                        <Input
+                          disabled={isLoading}
+                          placeholder="Color value"
+                          {...field}
+                        />
+                        <div
+                          className="p-6 rounded-full border cursor-pointer transition-transform hover:scale-110"
+                          style={{ backgroundColor: field.value || '#000000' }}
+                          onClick={() => setShowColorPicker(prev => !prev)}
+                        />
+                      </div>
+                      {showColorPicker && (
+                        <div className="relative z-50">
+                          <div className="absolute right-0 shadow-lg rounded-md overflow-hidden">
+                            <HexColorPicker 
+                              color={field.value || '#000000'} 
+                              onChange={(color) => {
+                                field.onChange(color);
+                              }} 
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </FormControl>
                   <FormMessage />
