@@ -20,7 +20,7 @@ export async function GET(
     }
 
     // Retrieve the specific billboard
-    const billboard = await prismadb.billboard.findUnique({
+    const billboard = await prismadb.billboard.findFirst({
       where: {
         id: parseInt(params.billboardId),
         storeId: parseInt(params.storeId),
