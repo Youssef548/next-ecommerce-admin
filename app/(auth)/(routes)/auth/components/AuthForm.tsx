@@ -44,17 +44,19 @@ export default function AuthForm({ googleEnabled, githubEnabled }: AuthFormProps
 
   const toggleVariant = useCallback(() => {
     setVariant((prev) => (prev === "Login" ? "Register" : "Login"));
-  }, [variant]);
+  }, []);
 
+  type LoginFormData = z.infer<typeof loginSchema>;
+  type RegisterFormData = z.infer<typeof registerSchema>;
+  type AuthFormData = LoginFormData | RegisterFormData;
+  
   const formSchema = variant === "Register" ? registerSchema : loginSchema;
 
-  type FormData = z.infer<typeof formSchema>;
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<AuthFormData>({
+    resolver: zodResolver(formSchema), 
   });
 
-  const onSubmit: SubmitHandler<FormData> = async (data) => {
+  const onSubmit: SubmitHandler<AuthFormData> = async (data) => {
     setIsLoading(true);
 
     try {
@@ -140,21 +142,21 @@ export default function AuthForm({ googleEnabled, githubEnabled }: AuthFormProps
     >
       <div
         className="
-            bg-white
+            bg-white dark:bg-gray-800
             px-4
             py-8
             shadow-sm
             sm:rounded-lg
             sm:px-10
             sm:py-12
-            "
-      >
+            ">
+
         <div className="space-y-6">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               {variant === "Register" && (
                 <FormField
-                  control={form.control as any}
+                  control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
@@ -217,10 +219,10 @@ export default function AuthForm({ googleEnabled, githubEnabled }: AuthFormProps
                 </Button>
 
                 {/* OR Divider */}
-                <div className="flex items-center justify-center w-full space-x-2 text-gray-500">
-                  <hr className="w-1/4 border-gray-300" />
+                <div className="flex items-center justify-center w-full space-x-2 text-gray-500 dark:text-gray-400">
+                  <hr className="w-1/4 border-gray-300 dark:border-gray-600" />
                   <span className="text-sm">Or continue with</span>
-                  <hr className="w-1/4 border-gray-300" />
+                  <hr className="w-1/4 border-gray-300 dark:border-gray-600" />
                 </div>
 
                 <div className="w-full mt-6 flex gap-2">
@@ -247,7 +249,7 @@ export default function AuthForm({ googleEnabled, githubEnabled }: AuthFormProps
                 justify-center
                 text-sm
                 px-2
-                text-gray-500
+                text-gray-500 dark:text-gray-400
                 "
                 >
                   <div>

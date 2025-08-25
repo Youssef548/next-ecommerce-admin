@@ -16,6 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Color } from "@prisma/client";
 import { Trash as TrashIcon } from "lucide-react";
@@ -102,8 +103,8 @@ export const ColorForm = ({ initialData }: ColorFormProps) => {
       router.push(`/${params.storeId}/colors`);
       router.refresh();
       toast.success(toastMessage);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -118,8 +119,8 @@ export const ColorForm = ({ initialData }: ColorFormProps) => {
       router.push(`/${params.storeId}/colors`);
       router.refresh();
       toast.success("Color deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

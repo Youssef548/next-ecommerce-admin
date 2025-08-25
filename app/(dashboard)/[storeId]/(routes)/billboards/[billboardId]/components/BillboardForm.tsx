@@ -17,6 +17,7 @@ import ImageUpload from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Billboard } from "@prisma/client";
 import { Trash as TrashIcon } from "lucide-react";
@@ -87,8 +88,8 @@ export const BillboardForm = ({ initialData }: BillboardFormProps) => {
       router.push(`/${params.storeId}/billboards`);
       router.refresh();
       toast.success(toastMessage);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -105,8 +106,8 @@ export const BillboardForm = ({ initialData }: BillboardFormProps) => {
       router.push(`/${params.storeId}/billboards`);
       router.refresh();
       toast.success("Billboard deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

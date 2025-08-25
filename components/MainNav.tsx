@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
   className?: string;
@@ -14,7 +14,7 @@ export function MainNav({ className, ...props }: MainNavProps): JSX.Element {
   const params = useParams();
   const router = useRouter();
 
-  const routes = [
+  const routes = useMemo(() => [
     {
       href: `/${params.storeId}`,
       label: "Overview",
@@ -55,13 +55,13 @@ export function MainNav({ className, ...props }: MainNavProps): JSX.Element {
       label: "Settings",
       active: pathname === `/${params.storeId}/settings`,
     },
-  ];
+  ], [params.storeId, pathname]);
   useEffect(() => {
     // Prefetch all pages in the background
     routes.forEach((route) => {
       router.prefetch(route.href);
     });
-  }, [params.storeId]);
+  }, [params.storeId, router, routes]);
 
   return (
     <nav

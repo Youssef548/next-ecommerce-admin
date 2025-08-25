@@ -36,7 +36,7 @@ interface storeSwitherProps extends PopoverTriggerProps {
   items: Store[];
 }
 
-const StoreSwithcer = ({ items, className, ...props }: storeSwitherProps) => {
+const StoreSwithcer = ({ items, className }: storeSwitherProps) => {
   const storeModal = useStoreModal();
   const params = useParams();
   const router = useRouter();

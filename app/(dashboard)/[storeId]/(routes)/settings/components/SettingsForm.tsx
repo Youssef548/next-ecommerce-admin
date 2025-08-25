@@ -16,6 +16,7 @@ import { Heading } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { UpdateStoreForm, updateStoreSchema } from "@/lib/schemas/storeSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Store } from "@prisma/client";
@@ -57,12 +58,8 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
       await api.patch(`/stores/${params.storeId}`, data);
       toast.success("Store updated successfully");
       router.refresh();
-    } catch (error: any) {
-      if (error?.response?.data?.error) {
-        toast.error(error?.response?.data?.error);
-      } else {
-        toast.error("An unexpected error occurred while updating the store");
-      }
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -76,12 +73,8 @@ export const SettingsForm = ({ initialData }: SettingsFormProps) => {
       router.refresh();
       router.push("/");
       toast.success("Store deleted successfully");
-    } catch (error: any) {
-      if (error?.response?.data?.error) {
-        toast.error(error?.response?.data?.error);
-      } else {
-        toast.error("An unexpected error occurred while deleting the store");
-      }
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

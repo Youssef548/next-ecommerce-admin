@@ -18,6 +18,7 @@ import { Copy, Edit, MoreHorizontal, Trash } from "lucide-react";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { AlertModal } from "@/components/modals/alertModal";
+import { handleApiError } from "@/lib/handle-api-error";
 
 interface CellActionProps {
   data: ColorColumn;
@@ -44,8 +45,8 @@ export const CellAction = ({ data }: CellActionProps) => {
       router.push(`/${params.storeId}/colors`);
       router.refresh();
       toast.success("Color deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
       setIsOpen(false);

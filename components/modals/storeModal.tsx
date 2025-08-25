@@ -18,8 +18,8 @@ import { Button } from "../ui/button";
 import { useState } from "react";
 import api from "@/lib/api/axiosInstance";
 
-import { useRouter } from "next/navigation";
-import toast from "react-hot-toast";
+
+import { handleApiError } from "@/lib/handle-api-error";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -27,8 +27,6 @@ const formSchema = z.object({
 
 export const StoreModal = () => {
   const storeModal = useStoreModal();
-
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -44,13 +42,8 @@ export const StoreModal = () => {
       const res = await api.post("/stores", values);
 
       window.location.assign(`/${res.data.id}`);
-    } catch (error: any) {
-      console.log(error);
-      if (error?.response?.status == 400) {
-        toast.error(error?.response?.data?.error);
-      } else {
-        toast.error("Something went wrong");
-      }
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

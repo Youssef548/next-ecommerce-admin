@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Billboard, Category } from "@prisma/client";
 import { Trash as TrashIcon } from "lucide-react";
@@ -91,8 +92,8 @@ export const CategoryForm = ({ initialData , billboards}: CategoryFormProps) => 
       router.push(`/${params.storeId}/categories`);
       router.refresh();
       toast.success(toastMessage);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -107,8 +108,8 @@ export const CategoryForm = ({ initialData , billboards}: CategoryFormProps) => 
       router.push(`/${params.storeId}/categories`);
       router.refresh();
       toast.success("Category deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

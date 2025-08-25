@@ -13,10 +13,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Heading } from "@/components/ui/heading";
-import ImageUpload from "@/components/ui/image-upload";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Size } from "@prisma/client";
 import { Trash as TrashIcon } from "lucide-react";
@@ -25,7 +25,6 @@ import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
-// import { ImageUpload } from "@/components/ui/image-upload";
 
 // Create a schema for size form
 const sizeSchema = z.object({
@@ -83,8 +82,8 @@ export const SizeForm = ({ initialData }: SizeFormProps) => {
       router.push(`/${params.storeId}/sizes`);
       router.refresh();
       toast.success(toastMessage);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -99,8 +98,8 @@ export const SizeForm = ({ initialData }: SizeFormProps) => {
       router.push(`/${params.storeId}/sizes`);
       router.refresh();
       toast.success("Size deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }

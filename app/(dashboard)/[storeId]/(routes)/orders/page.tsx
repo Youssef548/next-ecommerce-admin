@@ -1,9 +1,27 @@
 import { format } from "date-fns";
+import { Prisma } from "@prisma/client";
 
 import { OrderClient } from "./components/client";
 import prismadb from "@/lib/prismadb";
 import { OrderColumn } from "./components/columns";
 import { priceFormatter } from "@/lib/utils";
+
+// Define types based on Prisma schema
+type OrderWithItems = Prisma.OrderGetPayload<{
+  include: {
+    orderItems: {
+      include: {
+        product: true;
+      };
+    };
+  };
+}>;
+
+type OrderItem = Prisma.OrderItemGetPayload<{
+  include: {
+    product: true;
+  };
+}>;
 
 const OrdersPage = async ({
   params: { storeId },
@@ -26,16 +44,16 @@ const OrdersPage = async ({
     },
   });
 
-  const formattedOrders: OrderColumn[] = orders.map((item: any) => ({
-    id: item.id,
+  const formattedOrders: OrderColumn[] = orders.map((item: OrderWithItems) => ({
+    id: item.id.toString(),
     phone: item.phone,
     address: item.address,
-    products: item.orderItems.map(
-      (orderItem: any) => orderItem?.product?.name || ""
-    ),
+    products: item.orderItems
+      .map((orderItem: OrderItem) => orderItem.product?.name || "")
+      .join(", "),
     totalPrice: priceFormatter.format(
-      item.orderItems.reduce((total: number, item: any) => {
-        return total + Number(item.product.price);
+      item.orderItems.reduce((total: number, orderItem: OrderItem) => {
+        return total + Number(orderItem.product.price);
       }, 0)
     ),
     isPaid: item.isPaid,
