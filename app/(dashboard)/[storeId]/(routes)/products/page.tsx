@@ -1,10 +1,9 @@
 import { format } from "date-fns";
 
 import { ProductClient } from "./components/client";
-import prismadb from "@/lib/prismadb";
 import { ProductColumn } from "./components/columns";
 import { priceFormatter } from "@/lib/utils";
-import { Prisma } from "@prisma/client";
+import { findProductsWithRelations, ProductWithLegacyRelations } from "@/lib/product-helpers";
 
 const ProductsPage = async ({
   params: { storeId },
@@ -12,31 +11,21 @@ const ProductsPage = async ({
   params: { storeId: string };
 }) => {
 
-
-  const products = await prismadb.product.findMany({
-    where: {
-      storeId: parseInt(storeId),
-    },
-    include: {
-      category: true,
-      size: true,
-      color: true,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
+  const products = await findProductsWithRelations({
+    storeId: parseInt(storeId),
   });
 
   const formattedProducts: ProductColumn[] = products.map(
-    (item: any) => ({
-      id: item.id,
+    (item: ProductWithLegacyRelations) => ({
+      id: item.id.toString(),
       name: item.name,
       isFeatured: item.isFeatured,
       isArchived: item.isArchived,
       price: priceFormatter.format(Number(item.price)),
-      category: item.category.label,
-      size: item.size.name,
-      color: item.color.value,
+      // Use full arrays instead of just first values
+      categories: item.categories || [],
+      sizes: item.sizes || [],
+      colors: item.colors || [],
       createdAt: format(item.createdAt, "MMMM do, yyyy"),
     })
   );
