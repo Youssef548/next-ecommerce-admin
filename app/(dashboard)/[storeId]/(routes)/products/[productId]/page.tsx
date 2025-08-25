@@ -1,5 +1,5 @@
 import prismadb from "@/lib/prismadb";
-// import { ProductForm } from "./components/ProductForm";
+import { Category, Color, Size } from "@prisma/client";
 import dynamic from "next/dynamic";
 import Skeleton from "@/components/ui/skeleton";
 
@@ -41,9 +41,9 @@ const ProductPage = async ({
     if (product) {
       product = {
         ...product,
-        categories: product.categories.map(pc => pc.category),
-        sizes: product.sizes.map(ps => ps.size),
-        colors: product.colors.map(pc => pc.color),
+        categories: product.categories.map((pc: { category: Category }) => pc.category),
+        sizes: product.sizes.map((ps: { size: Size }) => ps.size),
+        colors: product.colors.map((pc: { color: Color }) => pc.color),
       };
     }
   }

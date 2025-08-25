@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && tsc --noEmit",
     "type-check": "tsc --noEmit",
     "test": "echo \"No tests specified\" && exit 0",
     "test:watch": "echo \"No tests specified\" && exit 0",
