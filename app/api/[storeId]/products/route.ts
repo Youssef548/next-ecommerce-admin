@@ -1,10 +1,11 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import prismadb from "@/lib/prismadb";
+import { findProductsWithRelations, createProductWithRelations } from "@/lib/product-helpers";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
 
 export async function POST(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { storeId: string } }
 ) {
   try {
@@ -28,9 +29,9 @@ export async function POST(
     const {
       name,
       price,
-      categoryId,
-      colorId,
-      sizeId,
+      categoryIds,
+      colorIds,
+      sizeIds,
       images,
       isFeatured,
       isArchived,
@@ -44,38 +45,24 @@ export async function POST(
       return NextResponse.json({ error: "Price is required" }, { status: 400 });
     }
 
-    if (!categoryId) {
+    if (!categoryIds || !categoryIds.length) {
       return NextResponse.json(
-        { error: "Category is required" },
+        { error: "At least one category is required" },
         { status: 400 }
       );
     }
 
-    if (!colorId) {
-      return NextResponse.json({ error: "Color is required" }, { status: 400 });
+    if (!colorIds || !colorIds.length) {
+      return NextResponse.json({ error: "At least one color is required" }, { status: 400 });
     }
 
-    if (!sizeId) {
-      return NextResponse.json({ error: "Size is required" }, { status: 400 });
+    if (!sizeIds || !sizeIds.length) {
+      return NextResponse.json({ error: "At least one size is required" }, { status: 400 });
     }
 
     if (!images || !images.length) {
       return NextResponse.json(
         { error: "Images are required" },
-        { status: 400 }
-      );
-    }
-
-    if (!isFeatured == undefined) {
-      return NextResponse.json(
-        { error: "Featured is required" },
-        { status: 400 }
-      );
-    }
-
-    if (isArchived == undefined) {
-      return NextResponse.json(
-        { error: "Archived is required" },
         { status: 400 }
       );
     }
@@ -98,33 +85,31 @@ export async function POST(
     if (!storeByUserId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
-    console.log();
 
-    const product = await prismadb.product.create({
-      data: {
-        name,
-        price,
-        isFeatured,
-        isArchived,
-        colorId: parseInt(colorId),
-        sizeId: parseInt(sizeId),
-        images: {
-          create: [...images.map((image: string) => ({ url: image }))],
-        },
-        categoryId: parseInt(categoryId),
-        storeId: parseInt(params.storeId),
-      },
+    const product = await createProductWithRelations({
+      name,
+      price,
+      isFeatured: isFeatured || false,
+      isArchived: isArchived || false,
+      storeId: parseInt(params.storeId),
+      categoryIds,
+      sizeIds,
+      colorIds,
+      imageUrls: images,
     });
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error("[PRODUCT_POST]", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.log("[PRODUCTS_POST]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
 export async function GET(
-  req: Request,
+  req: NextRequest,
   { params }: { params: { storeId: string } }
 ) {
   const { searchParams } = new URL(req.url);
@@ -141,29 +126,21 @@ export async function GET(
       );
     }
 
-    const products = await prismadb.product.findMany({
-      where: {
-        storeId: parseInt(params.storeId),
-        categoryId: categoryId ? parseInt(categoryId) : undefined,
-        colorId: colorId ? parseInt(colorId) : undefined,
-        sizeId: sizeId ? parseInt(sizeId) : undefined,
-        isFeatured: isFeatured === "true" ? true : undefined,
-        isArchived: false,
-      },
-      include: {
-        images: true,
-        category: true,
-        color: true,
-        size: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
+    const products = await findProductsWithRelations({
+      storeId: parseInt(params.storeId),
+      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      colorId: colorId ? parseInt(colorId) : undefined,
+      sizeId: sizeId ? parseInt(sizeId) : undefined,
+      isFeatured: isFeatured === "true" ? true : undefined,
+      isArchived: false,
     });
 
     return NextResponse.json(products);
   } catch (error) {
-    console.error("[PRODUCT_GET]", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.log("[PRODUCTS_GET]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

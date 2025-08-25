@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prismadb from "@/lib/prismadb";
 import { authOptions } from "@/lib/auth";
 import { getServerSession } from "next-auth/next";
+import { updateProductWithRelations, adaptProductToLegacy } from "@/lib/product-helpers";
 
 export async function GET(
   req: Request,
@@ -19,16 +20,16 @@ export async function GET(
       return NextResponse.json({ error: "Store not found" }, { status: 404 });
     }
 
-    // Retrieve the specific product
+    // Retrieve the specific product with new relationships
     const product = await prismadb.product.findUnique({
       where: {
         id: parseInt(params.productId),
       },
       include: {
         images: true,
-        category: true,
-        size: true,
-        color: true,
+        categories: { include: { category: true } },
+        sizes: { include: { size: true } },
+        colors: { include: { color: true } },
       },
     });
 
@@ -36,7 +37,10 @@ export async function GET(
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    // Convert to legacy format for backward compatibility
+    const adaptedProduct = adaptProductToLegacy(product);
+
+    return NextResponse.json(adaptedProduct);
   } catch (error) {
     console.error("[PRODUCT_GET]", error);
     return NextResponse.json(
@@ -71,9 +75,9 @@ export async function PATCH(
     const {
       name,
       price,
-      categoryId,
-      colorId,
-      sizeId,
+      categoryIds,
+      colorIds,
+      sizeIds,
       images,
       isFeatured,
       isArchived,
@@ -87,19 +91,19 @@ export async function PATCH(
       return NextResponse.json({ error: "Price is required" }, { status: 400 });
     }
 
-    if (!categoryId) {
+    if (!categoryIds || !categoryIds.length) {
       return NextResponse.json(
-        { error: "Category is required" },
+        { error: "At least one category is required" },
         { status: 400 }
       );
     }
 
-    if (!colorId) {
-      return NextResponse.json({ error: "Color is required" }, { status: 400 });
+    if (!colorIds || !colorIds.length) {
+      return NextResponse.json({ error: "At least one color is required" }, { status: 400 });
     }
 
-    if (!sizeId) {
-      return NextResponse.json({ error: "Size is required" }, { status: 400 });
+    if (!sizeIds || !sizeIds.length) {
+      return NextResponse.json({ error: "At least one size is required" }, { status: 400 });
     }
 
     if (!images || !images.length) {
@@ -109,23 +113,16 @@ export async function PATCH(
       );
     }
 
-    if (!isFeatured == undefined) {
-      return NextResponse.json(
-        { error: "Featured is required" },
-        { status: 400 }
-      );
-    }
-
-    if (isArchived == undefined) {
-      return NextResponse.json(
-        { error: "Archived is required" },
-        { status: 400 }
-      );
-    }
-
     if (!params.storeId) {
       return NextResponse.json(
         { error: "Store ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!params.productId) {
+      return NextResponse.json(
+        { error: "Product ID is required" },
         { status: 400 }
       );
     }
@@ -142,39 +139,27 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
-    await prismadb.product.update({
-      where: {
-        id: parseInt(params.productId),
-      },
-      data: {
+    const product = await updateProductWithRelations(
+      parseInt(params.productId),
+      {
         name,
         price,
-        categoryId: parseInt(categoryId),
-        colorId: parseInt(colorId),
-        sizeId: parseInt(sizeId),
-        images: {
-          deleteMany: {},
-        },
         isFeatured,
         isArchived,
-      },
-    });
-
-    const product = await prismadb.product.update({
-      where: {
-        id: parseInt(params.productId),
-      },
-      data: {
-        images: {
-          create: [...images.map((image: string) => ({ url: image }))],
-        },
-      },
-    });
+        categoryIds,
+        sizeIds,
+        colorIds,
+        imageUrls: images,
+      }
+    );
 
     return NextResponse.json(product);
   } catch (error) {
-    console.error("[PRODUCT_PATCH]", error);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.log("[PRODUCT_PATCH]", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
