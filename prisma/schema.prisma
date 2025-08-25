@@ -88,7 +88,7 @@ model Category {
   store       Store     @relation("StoreToCategory", fields: [storeId], references: [id])
   billboardId Int?
   billboard   Billboard? @relation(fields: [billboardId], references: [id])
-  Product     Product[] @relation("ProductToCategory")
+  products    ProductCategory[]
 
   label String
 
@@ -104,7 +104,7 @@ model Size {
   id       Int       @id @default(autoincrement())
   storeId  Int
   store    Store     @relation("StoreToSize", fields: [storeId], references: [id])
-  products Product[]
+  products ProductSize[]
   name     String
   value    String
 
@@ -119,7 +119,7 @@ model Color {
   id       Int       @id @default(autoincrement())
   storeId  Int
   store    Store     @relation("StoreToColor", fields: [storeId], references: [id])
-  products Product[]
+  products ProductColor[]
   name     String
   value    String
 
@@ -134,26 +134,20 @@ model Product {
   id         Int         @id @default(autoincrement())
   storeId    Int
   store      Store       @relation("StoreToProduct", fields: [storeId], references: [id])
-  categoryId Int
-  category   Category    @relation("ProductToCategory", fields: [categoryId], references: [id])
   name       String
   price      Decimal
   isFeatured Boolean     @default(false)
   isArchived Boolean     @default(false)
-  sizeId     Int
-  size       Size        @relation(fields: [sizeId], references: [id])
-  colorId    Int
-  color      Color       @relation(fields: [colorId], references: [id])
   images     Image[]
   orderItems OrderItem[]
+  categories ProductCategory[]
+  sizes      ProductSize[]
+  colors     ProductColor[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([storeId])
-  @@index([categoryId])
-  @@index([colorId])
-  @@index([sizeId])
   @@map("products")
 }
 
@@ -196,4 +190,44 @@ model OrderItem {
   @@index([orderId])
   @@index([productId])
   @@map("order_items")
+}
+
+// Junction tables for many-to-many relationships
+model ProductCategory {
+  id         Int      @id @default(autoincrement())
+  productId  Int
+  categoryId Int
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, categoryId])
+  @@index([productId])
+  @@index([categoryId])
+  @@map("product_categories")
+}
+
+model ProductSize {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  sizeId    Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  size      Size    @relation(fields: [sizeId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, sizeId])
+  @@index([productId])
+  @@index([sizeId])
+  @@map("product_sizes")
+}
+
+model ProductColor {
+  id        Int     @id @default(autoincrement())
+  productId Int
+  colorId   Int
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  color     Color   @relation(fields: [colorId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, colorId])
+  @@index([productId])
+  @@index([colorId])
+  @@map("product_colors")
 }
