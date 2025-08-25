@@ -3,6 +3,9 @@ const nextConfig = {
   // Disable strict mode for better compatibility
   reactStrictMode: false,
 
+  // Force dynamic rendering (not static)
+  output: 'standalone',
+  
   eslint: {
     ignoreDuringBuilds: true,
   },
@@ -26,6 +29,29 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  
+  // Environment-specific configuration
+  env: {
+    CUSTOM_KEY: process.env.NODE_ENV,
+  },
+  
+  // Disable static optimization for dynamic behavior
+  trailingSlash: false,
+  
+  // Headers for dynamic content
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate',
+          },
+        ],
+      },
+    ];
   },
   
   // Environment variables

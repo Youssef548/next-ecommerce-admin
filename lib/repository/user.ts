@@ -1,6 +1,5 @@
 import prisma from "@/lib/prismadb";
 import { AppError } from "@/lib/errors";
-import { NextResponse } from "next/server";
 
 export async function createUser(data: {
   name: string;
@@ -19,7 +18,7 @@ export async function createUser(data: {
     }
 
     return await prisma.user.create({ data });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Database Error:", error);
     throw new AppError("Failed to create user", 500);
   }

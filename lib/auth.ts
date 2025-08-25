@@ -100,6 +100,6 @@ declare module "next-auth" {
   }
 }
 
-export const getSession = async (req?: any, res?: any) => {
-  return getServerSession(req, res, authOptions);
+export const getSession = async () => {
+  return getServerSession(authOptions);
 };

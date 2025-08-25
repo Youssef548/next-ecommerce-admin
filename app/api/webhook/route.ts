@@ -18,11 +18,15 @@ export async function POST(req: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     );
-  } catch (error: any) {
-    console.error("[WEBHOOK_ERROR]", error.message);
-    return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
+  } catch (error: unknown) {
+    if (error instanceof Stripe.errors.StripeSignatureVerificationError) {
+      console.error("[WEBHOOK_ERROR]", error.message);
+      return new NextResponse(`Webhook Error: ${error.message}`, { status: 400 });
+    }
+  
+    console.error("[WEBHOOK_ERROR]", error);
+    return new NextResponse("Webhook Error: Invalid request", { status: 400 });
   }
-
   const session = event.data.object as Stripe.Checkout.Session;
   const address = session?.customer_details?.address;
 
@@ -81,11 +85,11 @@ export async function POST(req: Request) {
       });
 
       console.log("[WEBHOOK] Products updated successfully");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("[WEBHOOK_UPDATE_ERROR]", error);
-      return new NextResponse(`Database Error: ${error.message}`, {
-        status: 500,
-      });
+    
+      const message = error instanceof Error ? error.message : "Unknown error";
+      return new NextResponse(`Database Error: ${message}`, { status: 500 });
     }
   }
 
