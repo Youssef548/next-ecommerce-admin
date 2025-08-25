@@ -1,0 +1,57 @@
+name: Test Pipeline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 2 * * *' # Run daily at 2 AM UTC
+
+env:
+  NODE_VERSION: '18'
+  PNPM_VERSION: '8'
+
+jobs:
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: ${{ env.PNPM_VERSION }}
+        
+    - name: Install dependencies
+      run: pnpm install --no-frozen-lockfile --ignore-scripts
+      
+    - name: Generate Prisma Client
+      run: pnpm prisma generate
+      env:
+        DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        
+    - name: Verify health check endpoint exists
+      run: |
+        if [ -f "app/api/health/route.ts" ]; then
+          echo "✅ Health check endpoint exists"
+        else
+          echo "❌ Health check endpoint missing"
+          exit 1
+        fi
+        
+    - name: Verify environment files
+      run: |
+        for env_file in .env.development .env.staging .env.production; do
+          if [ -f "$env_file" ]; then
+            echo "✅ $env_file exists"
+          else
+            echo "❌ $env_file missing"
+            exit 1
+          fi
+        done
