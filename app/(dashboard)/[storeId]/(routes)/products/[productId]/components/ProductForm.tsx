@@ -25,26 +25,27 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import api from "@/lib/api/axiosInstance";
+import { handleApiError } from "@/lib/handle-api-error";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {  Category, Color, Image, Product, Size } from "@prisma/client";
-import { Trash as TrashIcon } from "lucide-react";
+import { Category, Color, Image, Product, Size } from "@prisma/client";
+import { Trash as TrashIcon, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import * as z from "zod";
-// import { ImageUpload } from "@/components/ui/image-upload";
+import { Badge } from "@/components/ui/badge";
 
-// Create a schema for product form
+// Updated schema for multiple relationships
 const productSchema = z.object({
   name: z.string().min(1, "Name is required").max(50),
   images: z.array(z.string(), {
     required_error: "Images are required",
   }),
   price: z.coerce.number().min(1, "Price is required"),
-  categoryId: z.string().min(1, "Category is required"),
-  sizeId: z.string().min(1, "Size is required"),
-  colorId: z.string().min(1, "Color is required"),
+  categoryIds: z.array(z.number()).min(1, "At least one category is required"),
+  sizeIds: z.array(z.number()).min(1, "At least one size is required"),
+  colorIds: z.array(z.number()).min(1, "At least one color is required"),
   isFeatured: z.boolean().default(false).optional(),
   isArchived: z.boolean().default(false).optional(),
 });
@@ -55,14 +56,17 @@ interface ProductFormProps {
   initialData:
     | (Product & {
         images: Image[];
+        categories?: Array<{ id: number; label: string }>;
+        sizes?: Array<{ id: number; name: string; value: string }>;
+        colors?: Array<{ id: number; name: string; value: string }>;
       })
     | null;
-    categories: Category[];
-    sizes: Size[];
-    colors: Color[];
+  categories: Category[];
+  sizes: Size[];
+  colors: Color[];
 }
 
-export const ProductForm = ({ initialData, categories, sizes, colors  }: ProductFormProps) => {
+export const ProductForm = ({ initialData, categories, sizes, colors }: ProductFormProps) => {
   const params = useParams();
   const router = useRouter();
 
@@ -80,20 +84,22 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
     resolver: zodResolver(productSchema),
     defaultValues: initialData
       ? {
-          ...initialData,
+          name: initialData.name,
           images: initialData.images.map((image) => image.url),
           price: parseFloat(String(initialData?.price)),
-          categoryId: String(initialData.categoryId),
-          sizeId: String(initialData.sizeId),
-          colorId: String(initialData.colorId),
+          categoryIds: initialData.categories?.map(cat => cat.id) || [],
+          sizeIds: initialData.sizes?.map(size => size.id) || [],
+          colorIds: initialData.colors?.map(color => color.id) || [],
+          isFeatured: initialData.isFeatured,
+          isArchived: initialData.isArchived,
         }
       : {
           name: "",
           images: [],
           price: 0,
-          categoryId: "",
-          sizeId: "",
-          colorId: "",
+          categoryIds: [],
+          sizeIds: [],
+          colorIds: [],
           isFeatured: false,
           isArchived: false,
         },
@@ -114,8 +120,8 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
       router.push(`/${params.storeId}/products`);
       router.refresh();
       toast.success(toastMessage);
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
@@ -130,11 +136,31 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
       router.push(`/${params.storeId}/products`);
       router.refresh();
       toast.success("Product deleted successfully");
-    } catch (error: any) {
-      toast.error(error?.response?.data?.error || "Something went wrong");
+    } catch (error: unknown) {
+      handleApiError(error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Helper functions for multi-select
+  const addToSelection = (
+    currentValues: number[],
+    newValue: string,
+    onChange: (values: number[]) => void
+  ) => {
+    const numValue = parseInt(newValue);
+    if (!currentValues.includes(numValue)) {
+      onChange([...currentValues, numValue]);
+    }
+  };
+
+  const removeFromSelection = (
+    currentValues: number[],
+    valueToRemove: number,
+    onChange: (values: number[]) => void
+  ) => {
+    onChange(currentValues.filter(id => id !== valueToRemove));
   };
 
   return (
@@ -193,7 +219,7 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
               );
             }}
           />
-          <div className="grid grid-cols-3 gap-8">
+          <div className="grid grid-cols-2 gap-8">
             <FormField
               control={form.control}
               name="name"
@@ -224,114 +250,166 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="categoryId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
+          </div>
+
+          {/* Multi-select Categories */}
+          <FormField
+            control={form.control}
+            name="categoryIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Categories</FormLabel>
+                <div className="space-y-4">
                   <Select
                     disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={String(field.value)}
-                    defaultValue={String(field.value)}
+                    onValueChange={(value) => addToSelection(field.value, value, field.onChange)}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue
-                          defaultValue={String(field.value)}
-                          placeholder="Select a category"
-                        />
+                        <SelectValue placeholder="Add categories" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={String(category.id)}
-                        >
+                      {categories
+                        .filter(category => !field.value.includes(category.id))
+                        .map((category) => (
+                          <SelectItem key={category.id} value={String(category.id)}>
+                            {category.label}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Selected Categories */}
+                  <div className="flex flex-wrap gap-2">
+                    {field.value.map((categoryId) => {
+                      const category = categories.find(c => c.id === categoryId);
+                      return category ? (
+                        <Badge key={categoryId} variant="secondary" className="flex items-center gap-1">
                           {category.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
+                            onClick={() => removeFromSelection(field.value, categoryId, field.onChange)}
+                          />
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-                <FormField
-              control={form.control}
-              name="sizeId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Size</FormLabel>
+          {/* Multi-select Sizes */}
+          <FormField
+            control={form.control}
+            name="sizeIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Sizes</FormLabel>
+                <div className="space-y-4">
                   <Select
                     disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={String(field.value)}
-                    defaultValue={String(field.value)}
+                    onValueChange={(value) => addToSelection(field.value, value, field.onChange)}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue
-                          defaultValue={String(field.value)}
-                          placeholder="Select a size"
-                        />
+                        <SelectValue placeholder="Add sizes" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {sizes.map((size) => (
-                        <SelectItem
-                          key={size.id}
-                          value={String(size.id)}
-                        >
-                          {size.name}
-                        </SelectItem>
-                      ))}
+                      {sizes
+                        .filter(size => !field.value.includes(size.id))
+                        .map((size) => (
+                          <SelectItem key={size.id} value={String(size.id)}>
+                            {size.name} ({size.value})
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
+                  
+                  {/* Selected Sizes */}
+                  <div className="flex flex-wrap gap-2">
+                    {field.value.map((sizeId) => {
+                      const size = sizes.find(s => s.id === sizeId);
+                      return size ? (
+                        <Badge key={sizeId} variant="secondary" className="flex items-center gap-1">
+                          {size.name} ({size.value})
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
+                            onClick={() => removeFromSelection(field.value, sizeId, field.onChange)}
+                          />
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-                    <FormField
-              control={form.control}
-              name="colorId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Color</FormLabel>
+          {/* Multi-select Colors */}
+          <FormField
+            control={form.control}
+            name="colorIds"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Colors</FormLabel>
+                <div className="space-y-4">
                   <Select
                     disabled={isLoading}
-                    onValueChange={field.onChange}
-                    value={String(field.value)}
-                    defaultValue={String(field.value)}
+                    onValueChange={(value) => addToSelection(field.value, value, field.onChange)}
                   >
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue
-                          defaultValue={String(field.value)}
-                          placeholder="Select a color"
-                        />
+                        <SelectValue placeholder="Add colors" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {colors.map((color) => (
-                        <SelectItem
-                          key={color.id}
-                          value={String(color.id)}
-                        >
+                      {colors
+                        .filter(color => !field.value.includes(color.id))
+                        .map((color) => (
+                          <SelectItem key={color.id} value={String(color.id)}>
+                            <div className="flex items-center gap-2">
+                              <div 
+                                className="w-4 h-4 rounded-full border" 
+                                style={{ backgroundColor: color.value }}
+                              />
+                              {color.name}
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {/* Selected Colors */}
+                  <div className="flex flex-wrap gap-2">
+                    {field.value.map((colorId) => {
+                      const color = colors.find(c => c.id === colorId);
+                      return color ? (
+                        <Badge key={colorId} variant="secondary" className="flex items-center gap-1">
+                          <div 
+                            className="w-3 h-3 rounded-full border" 
+                            style={{ backgroundColor: color.value }}
+                          />
                           {color.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                          <X 
+                            className="h-3 w-3 cursor-pointer" 
+                            onClick={() => removeFromSelection(field.value, colorId, field.onChange)}
+                          />
+                        </Badge>
+                      ) : null;
+                    })}
+                  </div>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="grid grid-cols-2 gap-8">
             <FormField
               control={form.control}
               name="isFeatured"
@@ -365,7 +443,7 @@ export const ProductForm = ({ initialData, categories, sizes, colors  }: Product
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>isArchived</FormLabel>
+                    <FormLabel>Archived</FormLabel>
                     <p className="text-sm text-muted-foreground">
                       This product will not appear anywhere in the store
                     </p>

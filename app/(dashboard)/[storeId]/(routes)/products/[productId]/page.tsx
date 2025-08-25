@@ -31,8 +31,21 @@ const ProductPage = async ({
       },
       include: {
         images: true,
+        categories: { include: { category: true } },
+        sizes: { include: { size: true } },
+        colors: { include: { color: true } },
       },
     });
+
+    // Transform the data to match the expected format for the form
+    if (product) {
+      product = {
+        ...product,
+        categories: product.categories.map(pc => pc.category),
+        sizes: product.sizes.map(ps => ps.size),
+        colors: product.colors.map(pc => pc.color),
+      };
+    }
   }
 
   const categories = await prismadb.category.findMany({
